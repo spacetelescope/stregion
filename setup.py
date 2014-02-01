@@ -30,11 +30,12 @@ for line in open('lib/version.py').readlines():
         exec(line.strip())
 
 def main():
-    if sys.version_info[0] >= 3:
-        install_requires = ['pyparsing>=2.0.0']
-    else:
+    install_requires = ['pyparsing>=2.0.0']
+    #if sys.version_info[0] >= 3:
+    #    install_requires = ['pyparsing>=2.0.0']
+    #else:
         # pyparsing >= 2.0.0 is not compatible with Python 2
-        install_requires = ['pyparsing<2.0.0']
+    #    install_requires = ['pyparsing<2.0.0']
 
     ka = dict(name = "pyregion",
               version = __version__,
