@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 from .kapteyn_celestial import skymatrix, longlat2xyz, dotrans, xyz2longlat
 from . import kapteyn_celestial
@@ -12,6 +13,16 @@ except ImportError:
         import pywcs
     except ImportError:
         pass
+
+if sys.version < '3':
+    def as_str(x):
+        return x
+else:
+    def as_str(x):
+        if hasattr(x, "decode"):
+            return x.decode()
+        else:
+            return x
 
 FK4 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk4)
 FK5 = (kapteyn_celestial.equatorial, kapteyn_celestial.fk5)
@@ -39,7 +50,6 @@ def is_equal_coord_sys(src, dest):
 
 def is_string_like(obj):
     'Return True if *obj* looks like a string'
-    import sys
     if sys.version_info >= (3,0):
         if isinstance(obj, str): return True
     else:
@@ -51,7 +61,7 @@ def is_string_like(obj):
 
 class sky2sky(object):
     def __init__(self, src, dest):
-    
+
         if is_string_like(src):
             src = coord_system[src.lower()]
 
@@ -110,24 +120,36 @@ def coord_system_guess(ctype1_name, ctype2_name, equinox):
 def fix_header(header):
     "return a new fixed header"
 
-    old_cards = header.ascardlist()
-    new_cards = type(old_cards)()
+    if hasattr(header, "cards"):
+        old_cards = header.cards
+    else:
+        old_cards = header.ascardlist()
+
+    new_cards = []
+
+    from operator import attrgetter
+    if old_cards and hasattr(old_cards[0], "keyword"):
+        get_key = attrgetter("keyword")
+    else:
+        get_key = attrgetter("key")
 
     for c in old_cards:
+        key = get_key(c)
+
         # ignore comments and history
-        if c.key in ["COMMENT", "HISTORY"]:
+        if key in ["COMMENT", "HISTORY"]:
             continue
 
         # use "deg"
-        if c.key.startswith("CUNIT") and c.value.lower().startswith("deg"):
-            c = type(c)(c.key, "deg")
+        if key.startswith("CUNIT") and c.value.lower().startswith("deg"):
+            c = type(c)(key, "deg")
 
         new_cards.append(c)
 
     h = type(header)(new_cards)
-    
+
     _remove_header_tdd(h) # ignore non-SIP distortions
-    
+
     return h
 
 
@@ -141,11 +163,11 @@ def _remove_header_tdd(hdr):
     # fitsblender/blendheaders.py
     distortion_kws = ['TDDALPHA','TDDBETA','D2IMEXT','D2IMERR',
                       'DGEOEXT','NPOLEXT']
-    
+
     for kw in distortion_kws:
         if kw in hdr:
             del hdr[kw]
-    
+
     # Remove paper IV related keywords related to the
     #   DGEO correction here
     for k in hdr.items():
@@ -263,21 +285,37 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     A wrapper for pywcs
     """
     def __init__(self, header):
-        if hasattr(header, "ascard"):
+        """
+        header could be pyfits.Header instance of pywcs.WCS instance.
+        """
+
+        # We can't check the header type using isinstance since we don't know
+        # if it comes from PyFITS or Astropy, so instead we check if it has
+        # the 'ascard' attribute that both header classes define.
+
+        if hasattr(header, 'ascard'):
+
             header = fix_header(header)
-            # pywcs.WCS internally uses `repr(header.ascard)` which
-            # returns str, but expecte byte in py3.
-            import sys
-            if sys.version_info >= (3,0):
-                header = repr(header.ascard).encode("ascii")
-            self._pywcs = pywcs.wcsutil.HSTWCS(header=header)
-        else:
+
+            # Since we don't know if PyFITS or PyWCS are from Astropy, and the
+            # WCS object in PyWCS and Astropy both accept a string
+            # representation of the header, we use this instead (both
+            # internally use `repr(header.ascard)` which returns str,
+            # and is compatible with Python 3
+
+            header = repr(header.ascard).encode('latin1')
+
+            self._pywcs = pywcs.WCS(header=header)
+
+        elif hasattr(header, "wcs"):
             self._pywcs = header
+        else:
+            raise ValueError("header must be an instance of pyfits.Header or astropy.io.fits.Header")
 
         ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
-        return tuple(s.decode() for s in self._pywcs.wcs.ctype)
+        return tuple(as_str(s) for s in self._pywcs.wcs.ctype)
 
     ctypes = property(_get_ctypes)
 
@@ -300,18 +338,21 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
         self.fix_lon(lon_lat)
 
         xy1 = lon_lat.transpose()
+
         # somehow, wcs_sky2pix does not work for some cases
-#        xy21 = [self._pywcs.wcs_sky2pix([xy11], 1)[0] for xy11 in xy1]
-#        #xy21 = self._pywcs.wcs_sky2pix(xy1, 1)
-        xy21 = self._pywcs.all_sky2pix(xy1[:,0],xy1[:,1],origin=1)
+        #xy21 = [self._pywcs.wcs_sky2pix([xy11], 1)[0] for xy11 in xy1]
+        ##xy21 = self._pywcs.wcs_sky2pix(xy1, 1)
+        #xy2 = np.array(xy21).transpose()
+
+        xy21 = self._pywcs.wcs_sky2pix(xy1[:,0],xy1[:,1],origin=1)
         xy2 = np.vstack(xy21)
 
-#        xy2 = np.array(xy21).transpose()
         return xy2
+
 
     def toworld(self, xy):
         """ 1, 1 base """
-        xy2 = self._pywcs.all_pix2sky(np.asarray(xy).T, 1)
+        xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
 
         lon_lat = xy2.T
         # fixme
@@ -322,7 +363,6 @@ class ProjectionPywcsNd(_ProjectionSubInterface, ProjectionBase):
     #def sub(self, axes):
     #    wcs = self._pywcs.sub(axes=axes)
     #    return ProjectionPywcs(wcs)
-
 
 
 class ProjectionPywcsSub(_ProjectionSubInterface, ProjectionBase):
@@ -416,13 +456,13 @@ class ProjectionPywcs(ProjectionBase):
     """
     def __init__(self, header):
         if hasattr(header, "ascard"):
-            self._pywcs = pywcs.wcsutil.HSTWCS(header=header)
+            self._pywcs = pywcs.WCS(header=header)
         else:
             self._pywcs = header
         ProjectionBase.__init__(self)
 
     def _get_ctypes(self):
-        return tuple(self._pywcs.wcs.ctype)
+        return tuple(as_str(s) for s in self._pywcs.wcs.ctype)
 
     ctypes = property(_get_ctypes)
 
@@ -433,12 +473,12 @@ class ProjectionPywcs(ProjectionBase):
 
     def topixel(self, xy):
         """ 1, 1 base """
-        xy2 = self._pywcs.all_sky2pix(np.asarray(xy).T, 1)
+        xy2 = self._pywcs.wcs_sky2pix(np.asarray(xy).T, 1)
         return xy2.T[:2]
 
     def toworld(self, xy):
         """ 1, 1 base """
-        xy2 = self._pywcs.all_pix2sky(np.asarray(xy).T, 1)
+        xy2 = self._pywcs.wcs_pix2sky(np.asarray(xy).T, 1)
         return xy2.T[:2]
 
     def sub(self, axes):
@@ -456,7 +496,7 @@ class ProjectionSimple(ProjectionBase):
         self._simple_init(header)
 
     def _get_ctypes(self):
-        return tuple(self._pywcs.wcs.ctype)
+        return tuple(as_str(s) for s in self._pywcs.wcs.ctype)
 
     ctypes = property(_get_ctypes)
 
@@ -526,22 +566,15 @@ class ProjectionSimple(ProjectionBase):
 
 ProjectionDefault = ProjectionPywcsNd
 
-if pywcs is None:
-    def get_kapteyn_projection(header):
-        err = "pywcs packages are required."
 
-        raise RuntimeError(err)
-else:
+def get_kapteyn_projection(header):
+    if isinstance(header, ProjectionBase):
+        projection = header
+    else:
+        projection = ProjectionPywcsNd(header)
 
-    def get_kapteyn_projection(header):
-        if isinstance(header, ProjectionBase):
-            projection = header
-        else:
-            projection = ProjectionDefault(header)
-
-        projection = projection.sub(axes=[1,2])
-        return projection
-
+    #projection = projection.sub(axes=[1,2])
+    return projection
 
 
 def estimate_cdelt_trans(transSky2Pix, x0, y0):
@@ -563,10 +596,6 @@ def estimate_cdelt_trans(transSky2Pix, x0, y0):
     return (cd1*cd2)**.5
 
 
-
-
-
-
 def estimate_angle_trans(transSky2Pix, x0, y0):
     """
     return a tuple of two angles (in degree) of increasing direction
@@ -576,7 +605,7 @@ def estimate_angle_trans(transSky2Pix, x0, y0):
 
     """
 
-    cdelt = estimate_cdelt(transSky2Pix, x0, y0)
+    cdelt = estimate_cdelt_trans(transSky2Pix, x0, y0)
 
     transPix2Sky = transSky2Pix.inverted()
 
@@ -641,14 +670,8 @@ def estimate_angle(wcs_proj, x0, y0, sky_to_sky=None):
 
     return a1[0], a2[0]
 
-
-
 if __name__ == "__main__":
     fk5_to_fk4 = sky2sky(FK5, FK4)
     #print fk5_to_fk4([47.37], [6.32])
     #print fk5_to_fk4([47.37, 47.37], [6.32, 6.32])
     #print sky2sky("fk5", "FK4")([47.37, 47.37], [6.32, 6.32])
-
-
-
-

@@ -25,7 +25,7 @@ class ShapeList(list):
         else:
             return True
 
-    def as_imagecoord(self, header):
+    def as_imagecoord(self, header, rot_wrt_axis = 1):
         """
         Return a new ShapeList where the coordinate of the each shape
         is converted to the image coordinate using the given header
@@ -37,7 +37,7 @@ class ShapeList(list):
             comment_list = cycle([None])
 
         r = RegionParser.sky_to_image(zip(self, comment_list),
-                                      header)
+                                      header, rot_wrt_axis = rot_wrt_axis)
         shape_list, comment_list = zip(*list(r))
         return ShapeList(shape_list, comment_list=comment_list)
 
@@ -60,7 +60,7 @@ class ShapeList(list):
 
         return patches, txts
 
-    def get_filter(self, header=None, origin=1):
+    def get_filter(self, header=None, origin=1, rot_wrt_axis=1):
         """
         Often, the regions files implicitly assume the lower-left
         corner of the image as a coordinate (1,1). However, the python
@@ -77,14 +77,14 @@ class ShapeList(list):
                 raise RuntimeError("the region has non-image coordinate. header is required.")
             reg_in_imagecoord = self
         else:
-            reg_in_imagecoord = self.as_imagecoord(header)
+            reg_in_imagecoord = self.as_imagecoord(header, rot_wrt_axis = rot_wrt_axis)
 
         region_filter = as_region_filter(reg_in_imagecoord, origin=1)
 
         return region_filter
 
 
-    def get_mask(self, hdu=None, header=None, shape=None):
+    def get_mask(self, hdu=None, header=None, shape=None, rot_wrt_axis=1):
         """
         creates a 2-d mask.
 
@@ -98,7 +98,7 @@ class ShapeList(list):
         if hdu and shape is None:
             shape = hdu.data.shape
 
-        region_filter = self.get_filter(header=header)
+        region_filter = self.get_filter(header=header, rot_wrt_axis=rot_wrt_axis)
         mask = region_filter.mask(shape)
 
         return mask
@@ -155,16 +155,16 @@ class ShapeList(list):
         outf = None
         try:
             outf = _builtin_open(outfile,'w')
-            
+
             attr0 = self[0].attr[1]
             defaultline = " ".join( [ "%s=%s" % (a,attr0[a]) for a in attr0 \
                                      if a!='text' ] )
-            
+
             # first line is globals
             print >>outf, "global", defaultline
             # second line must be a coordinate format
             print >>outf, prev_cs
-            
+
             for shape in self:
                 shape_attr = '' if prev_cs == shape.coord_format \
                     else shape.coord_format+"; "
@@ -172,10 +172,10 @@ class ShapeList(list):
                 text_coordlist = [ "%f" % f for f in shape.coord_list ]
                 shape_coords = "(" + ",".join(text_coordlist) + ")"
                 shape_comment = " # " + shape.comment if shape.comment else ''
-                
+
                 shape_str = shape_attr + shape_excl + shape.name + \
                             shape_coords + shape_comment
-                
+
                 print >>outf, shape_str
 
         except IOError as e:
@@ -224,18 +224,17 @@ def read_region(s):
     return rp.filter_shape(sss2)
 
 
-def read_region_as_imagecoord(s, header):
+def read_region_as_imagecoord(s, header, rot_wrt_axis=1):
     rp = RegionParser()
     ss = rp.parse(s)
     sss1 = rp.convert_attr(ss)
     sss2 = _check_wcs(sss1)
-    sss3 = rp.sky_to_image(sss2, header)
+    sss3 = rp.sky_to_image(sss2, header, rot_wrt_axis = rot_wrt_axis)
 
     return rp.filter_shape(sss3)
 
 
-
-def get_mask(region, hdu):
+def get_mask(region, hdu, origin=1):
     """
     f = pyfits.read("test.fits")
     reg = read_region_as_imagecoord(s, f[0].header)
@@ -245,9 +244,9 @@ def get_mask(region, hdu):
     from pyregion.region_to_filter import as_region_filter
 
     data = hdu.data
-    header = hdu.header
+    #header = hdu.header
 
-    region_filter = as_region_filter(region, header=header)
+    region_filter = as_region_filter(region, origin=origin)
 
     mask = region_filter.mask(data)
 
