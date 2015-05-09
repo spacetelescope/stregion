@@ -273,7 +273,7 @@ class RegionParser(RegionPusher):
     @staticmethod
     def filter_shape2(sss):
         r = [s1 for s1 in sss if isinstance(s1[0], Shape)]
-        return zip(*r)
+        return list(zip(*r))
 
 
 def test_regionLine():

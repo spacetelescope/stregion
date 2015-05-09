@@ -1,3 +1,4 @@
+from __future__ import print_function
 from .version import __version__
 from .ds9_region_parser import RegionParser
 from .wcs_converter import check_wcs as _check_wcs
@@ -36,9 +37,9 @@ class ShapeList(list):
         if comment_list is None:
             comment_list = cycle([None])
 
-        r = RegionParser.sky_to_image(zip(self, comment_list),
+        r = RegionParser.sky_to_image(list(zip(self, comment_list)),
                                       header, rot_wrt_axis = rot_wrt_axis)
-        shape_list, comment_list = zip(*list(r))
+        shape_list, comment_list = list(zip(*list(r)))
         return ShapeList(shape_list, comment_list=comment_list)
 
 
@@ -134,8 +135,8 @@ class ShapeList(list):
     def write(self,outfile):
         """ Writes the current shape list out as a region file """
         if len(self) < 1:
-            print "WARNING: The region list is empty. The region file \"%s\" "\
-                           "will be empty." % outfile
+            print("WARNING: The region list is empty. The region file \"%s\" "
+                           "will be empty." % outfile)
             try:
                 outf = open(outfile,'w')
                 outf.close()
@@ -161,9 +162,9 @@ class ShapeList(list):
                                      if a!='text' ] )
 
             # first line is globals
-            print >>outf, "global", defaultline
+            print("global", defaultline, file=outf)
             # second line must be a coordinate format
-            print >>outf, prev_cs
+            print(prev_cs, file=outf)
 
             for shape in self:
                 shape_attr = '' if prev_cs == shape.coord_format \

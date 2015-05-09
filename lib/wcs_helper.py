@@ -170,7 +170,7 @@ def _remove_header_tdd(hdr):
 
     # Remove paper IV related keywords related to the
     #   DGEO correction here
-    for k in hdr.items():
+    for k in list(hdr.items()):
         if (k[0][:2] == 'DP'):
             del hdr[k[0]+'*']
             del hdr[k[0]+'.*']
@@ -269,7 +269,7 @@ class _ProjectionSubInterface:
             if i >= self.naxis:
                 raise ValueError("Incorrect axis number")
 
-        if axis_nums_to_keep == range(self.naxis):
+        if axis_nums_to_keep == list(range(self.naxis)):
             return self
 
         proj_sub = ProjectionPywcsSub(self, axis_nums_to_keep, ref_pixel)
