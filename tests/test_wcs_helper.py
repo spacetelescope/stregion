@@ -5,7 +5,7 @@ import pyregion
 try:
     from astropy import wcs as pywcs
 except ImportError:
-    import pywcs
+    from astropy import wcs as pywcs
 
 def test_estimate_cdelt():
     l,b=0,0

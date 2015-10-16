@@ -5,7 +5,7 @@ import pyregion
 try:
     from astropy.io import fits as pyfits
 except ImportError:
-    import pyfits
+    from astropy.io import fits as pyfits
 
 # read in the image
 xray_name="pspc_skyview.fits"

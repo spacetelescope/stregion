@@ -1,7 +1,7 @@
 try:
     from astropy.io import fits as pyfits
 except ImportError:
-    import pyfits
+    from astropy.io import fits as pyfits
 
 from demo_helper import pyfits_card_fromstring
 

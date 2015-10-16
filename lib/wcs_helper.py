@@ -10,7 +10,7 @@ try:
     from astropy import wcs as pywcs
 except ImportError:
     try:
-        import pywcs
+        from astropy import wcs as pywcs
     except ImportError:
         pass
 

@@ -6,7 +6,7 @@ import math
 try:
     from astropy.io import fits as pyfits
 except ImportError:
-    import pyfits
+    from astropy.io import fits as pyfits
 
 # At some point, pyfits.Card.fromstring has changed from unbound
 # method to bounded method.
