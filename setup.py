@@ -33,7 +33,10 @@ with open('stregion/version.py') as version_data:
 
 
 def main():
-    install_requires = ['pyparsing>=2.0.0']
+    install_requires = [
+        'numpy',
+        'pyparsing>=2.0.0'
+    ]
 
     ka = dict(name="stregion",
               version=version,
