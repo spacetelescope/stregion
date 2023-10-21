@@ -29,6 +29,7 @@ dynamic = ['version']
 
 [build-system]
 requires = [
+    'Cython',
     'numpy',
     'setuptools >=61',
     'setuptools_scm[toml] >=3.4',
