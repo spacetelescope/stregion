@@ -1,57 +1,41 @@
+import os
 import sys
 import warnings
 
 from setuptools import setup, Extension
+from Cython.Build import cythonize
 
-# check if cython or pyrex is available.
-pyrex_impls = 'Cython.Distutils.build_ext', 'Pyrex.Distutils.build_ext'
-for pyrex_impl in pyrex_impls:
-    try:
-        # from (pyrex_impl) import build_ext
-        build_ext = __import__(pyrex_impl, fromlist=['build_ext']).build_ext
-        break
-    except ImportError:
-        pass
-have_pyrex = 'build_ext' in globals()
 
-if have_pyrex:
-    cmdclass = {'build_ext': build_ext}
-    PYREX_SOURCE = "src/_region_filter.pyx"
-else:
-    cmdclass = {}
-    PYREX_SOURCE = "src/_region_filter.c"
+try:
+    import numpy
+except ImportError:
+    warnings.warn(
+        "numpy must be installed to build the filtering module.")
+    sys.exit(1)
 
-# If you don't want to build filtering module (which requires a C compiler), set it to False
-WITH_FILTER = True
+try:
+    numpy_include = numpy.get_include()
+except AttributeError:
+    numpy_include = numpy.get_numpy_include()
 
-arguments = dict()
+CYTHON_SOURCE_DIR = "src"
+CYTHON_SOURCE_FILES = ["_region_filter.pyx"]
+EXTRA_COMPILE_ARGS = [
+    "-Wall",
+    "-Wextra",
+    "-std=gnu99",
+]
 
-if WITH_FILTER:
-    try:
-        import numpy
-    except ImportError:
-        warnings.warn(
-            "numpy must be installed to build the filtering module.")
-        sys.exit(1)
+extensions = [
+    Extension(
+        "stregion._region_filter",
+        [os.path.join(CYTHON_SOURCE_DIR, x) for x in CYTHON_SOURCE_FILES],
+        include_dirs=[
+            CYTHON_SOURCE_DIR,
+            numpy_include,
+        ],
+        extra_compile_args=EXTRA_COMPILE_ARGS,
+    ),
+]
 
-    try:
-        numpy_include = numpy.get_include()
-    except AttributeError:
-        numpy_include = numpy.get_numpy_include()
-
-    if len(cmdclass) > 0:
-        arguments["cmdclass"] = cmdclass
-
-    arguments["ext_modules"] = [
-        Extension(
-            "stregion._region_filter",
-            [PYREX_SOURCE],
-            include_dirs=[
-                './src',
-                numpy_include,
-            ],
-            libraries=[],
-        )
-    ]
-
-setup(**arguments)
+setup(ext_modules=cythonize(extensions))
