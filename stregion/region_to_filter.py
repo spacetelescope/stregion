@@ -1,6 +1,8 @@
 import numpy as np
-import stregion._region_filter as region_filter
 import warnings
+
+from . import _region_filter as region_filter
+
 
 def as_region_filter(shape_list, origin=1):
     """
