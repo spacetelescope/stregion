@@ -2,7 +2,7 @@
 name = 'stregion'
 description = 'python parser for ds9 region files'
 readme = 'README.md'
-requires-python = '>=3.7'
+requires-python = '>=3.9'
 license = { file = 'LICENSE.txt' }
 authors = [{ name = 'Jae-Joon Lee', email = 'lee.j.joon@gmail.com' }]
 classifiers = [
