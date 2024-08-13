@@ -23,6 +23,7 @@ CYTHON_SOURCE_FILES = ["_region_filter.pyx"]
 EXTRA_COMPILE_ARGS = [
     "-Wall",
     "-Wextra",
+    "-Wno-int-conversion",
     "-std=gnu99",
 ]
 
