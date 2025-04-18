@@ -1,0 +1,29 @@
+name: test
+
+on:
+  push:
+    branches:
+      - master
+      - '*x'
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  test:
+    name: test (Python ${{ matrix.python }}, ${{ matrix.runs-on }})
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python: [ '3.8', '3.9', '3.10', '3.11', '3.12' ]
+        runs-on: [ ubuntu-latest, macos-latest ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-files: pyproject.toml
+      - run: pip install .[test] pytest-xdist
+      - run: pytest -n auto
