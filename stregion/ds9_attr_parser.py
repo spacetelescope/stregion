@@ -24,7 +24,7 @@ def get_ds9_attr_parser():
               Word(nums+".")
               ])
     expr = lhs + Optional(Literal("=").suppress() + rhs)
-    expr.setParseAction(lambda s, l, tok: tuple(tok))
+    expr.set_parse_action(lambda s, l, tok: tuple(tok))
 
     return ZeroOrMore(expr)
 
@@ -45,12 +45,12 @@ class Ds9AttrParser(object):
                                          composite=wcs_shape(CoordOdd, CoordEven, Angle),
                                          )
         regionShape = define_shape_helper(ds9_shape_in_comment_defs)
-        regionShape = regionShape.setParseAction(lambda s, l, tok: Shape(tok[0], tok[1:]))
+        regionShape = regionShape.set_parse_action(lambda s, l, tok: Shape(tok[0], tok[1:]))
 
 
         self.parser_default = ds9_attr_parser
 
-        cont = CaselessKeyword("||").setParseAction(self.set_continued).suppress()
+        cont = CaselessKeyword("||").set_parse_action(self.set_continued).suppress()
         line = Optional(And([regionShape,
                              Optional(cont)])) \
                              + ds9_attr_parser

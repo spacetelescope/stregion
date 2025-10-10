@@ -66,7 +66,7 @@ class RegionParser(RegionPusher):
 
         self.shape_definition = ds9_shape_defs
         regionShape = define_shape_helper(self.shape_definition)
-        regionShape = regionShape.setParseAction(lambda s, l, tok: Shape(tok[0], tok[1:]))
+        regionShape = regionShape.set_parse_action(lambda s, l, tok: Shape(tok[0], tok[1:]))
 
         regionExpr = define_expr(regionShape,
                                  negate_func=lambda s, l, tok: tok[-1].set_exclude(),
@@ -82,7 +82,7 @@ class RegionParser(RegionPusher):
 
         regionAtom = (regionExpr | coordCommand | regionGlobal)
 
-        regionAtom = regionAtom.setParseAction(self.pushAtom)
+        regionAtom = regionAtom.set_parse_action(self.pushAtom)
 
         regionComment = comment_shell_like(Literal("#"),
                                            parseAction=self.pushComment)
@@ -93,7 +93,7 @@ class RegionParser(RegionPusher):
                                   )
 
         line_w_composite = And([regionAtom,
-                                CaselessKeyword("||").setParseAction(self.set_continued)
+                                CaselessKeyword("||").set_parse_action(self.set_continued)
                                 ]) \
                            + Optional(regionComment)
 
