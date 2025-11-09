@@ -26,5 +26,3 @@ jobs:
         - cp3*-win_amd64
       sdist: true
       test_command: python -c "from stregion import _region_filter"
-    secrets:
-      pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
