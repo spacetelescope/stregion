@@ -16,8 +16,8 @@ def _unsigned_simple_number():
                        Optional( point + Optional( Word( nums ) ) ) +
                        Optional( e + Word( "+-"+nums, nums ) ) )
 
-    return fnumber #.setParseAction(lambda s,l,t: (float(t[0]), t[0]))
-    #return fnumber.leaveWhitespace().setParseAction(lambda s,l,t: [ float(t[0])])
+    return fnumber #.set_parse_action(lambda s,l,t: (float(t[0]), t[0]))
+    #return fnumber.leaveWhitespace().set_parse_action(lambda s,l,t: [ float(t[0])])
 
 
 
@@ -39,8 +39,8 @@ def get_default(v):
         return v
     return _f
 
-optional_sign = Optional(Literal("+") | Literal("-")).setParseAction(get_default(""))
-#optional_sign = Optional(Literal("+") | Literal("-")) #.setParseAction(getSign)
+optional_sign = Optional(Literal("+") | Literal("-")).set_parse_action(get_default(""))
+#optional_sign = Optional(Literal("+") | Literal("-")) #.set_parse_action(getSign)
 
 
 class SimpleNumber(object):
@@ -58,7 +58,7 @@ class SimpleNumber(object):
 
 def _simple_number():
     s = Combine(optional_sign + usn)
-    s.setParseAction(lambda s, l, tok: SimpleNumber(tok[0]))
+    s.set_parse_action(lambda s, l, tok: SimpleNumber(tok[0]))
 
     return s
 
@@ -84,7 +84,7 @@ class SimpleInteger(object):
 
 def _unsigned_integer():
     s = Combine(Optional("+") + Word(nums))
-    s.setParseAction(lambda s, l, tok: SimpleInteger(tok[0]))
+    s.set_parse_action(lambda s, l, tok: SimpleInteger(tok[0]))
 
     return s
 
@@ -181,7 +181,7 @@ def _sexadecimal():
     s = optional_sign + usn + colon + usn + \
         Optional(colon + usn)
 
-        #Optional(colon + usn).setParseAction(get_default(0))
+        #Optional(colon + usn).set_parse_action(get_default(0))
 
     #s = s.leaveWhitespace()
 
@@ -189,8 +189,8 @@ def _sexadecimal():
 
 #sexadecimal = _sexadecimal()
 
-sexadecimal60 = _sexadecimal().setParseAction(lambda s, l, tok: DMS(tok))
-sexadecimal24 = _sexadecimal().setParseAction(lambda s, l, tok: HMS(tok))
+sexadecimal60 = _sexadecimal().set_parse_action(lambda s, l, tok: DMS(tok))
+sexadecimal24 = _sexadecimal().set_parse_action(lambda s, l, tok: HMS(tok))
 
 
 def test_sexadecimal():
@@ -210,7 +210,7 @@ def _hms_number():
 
     hms = optional_sign + _h + Optional(_m + Optional(_s))
 
-    hms = hms.setParseAction(lambda s, l, tok: HMS(tok))
+    hms = hms.set_parse_action(lambda s, l, tok: HMS(tok))
 
     return hms
 
@@ -223,17 +223,17 @@ def _dms_number():
 
     dms = optional_sign + _d + Optional(_m + Optional(_s))
 
-    dms = dms.setParseAction(lambda s, l, tok: DMS(tok))
+    dms = dms.set_parse_action(lambda s, l, tok: DMS(tok))
 
     return dms
 
 
-    #zzz = Empty().setParseAction(lambda s, l, tok: 0)
+    #zzz = Empty().set_parse_action(lambda s, l, tok: 0)
 
 
-    #_hms = optional_sign + Or([_h + Optional(_m).setParseAction(get_default(0)) \
-    #                           + Optional(_s).setParseAction(get_default(0)),
-    #                           zzz + _m + Optional(_s).setParseAction(get_default(0)),
+    #_hms = optional_sign + Or([_h + Optional(_m).set_parse_action(get_default(0)) \
+    #                           + Optional(_s).set_parse_action(get_default(0)),
+    #                           zzz + _m + Optional(_s).set_parse_action(get_default(0)),
     #                           zzz + zzz + _s])
 
     #_hms = _hms.leaveWhitespace()
@@ -258,14 +258,14 @@ def test_hms():
 #     _m = (usn + Literal("m")).leaveWhitespace()
 #     _s = (usn + Literal("s")).leaveWhitespace()
 
-#     zzz = Empty().setParseAction(lambda s, l, tok: 0)
+#     zzz = Empty().set_parse_action(lambda s, l, tok: 0)
 
-#     _dms = optional_sign + Or([_d + Optional(_m).setParseAction(get_default(0)) + Optional(_s).setParseAction(get_default(0)),
-#                                zzz + _m + Optional(_s).setParseAction(get_default(0)),
+#     _dms = optional_sign + Or([_d + Optional(_m).set_parse_action(get_default(0)) + Optional(_s).set_parse_action(get_default(0)),
+#                                zzz + _m + Optional(_s).set_parse_action(get_default(0)),
 #                                zzz + zzz + _s])
 
 #     #_hms = _hms.leaveWhitespace()
-#     dms = _dms.setParseAction(lambda s, l, tok: DMS(*tok))
+#     dms = _dms.set_parse_action(lambda s, l, tok: DMS(*tok))
 
 #     return dms
 
@@ -288,7 +288,7 @@ def _angular_distance():
                _s])
 
     #_hms = _hms.leaveWhitespace()
-    ms = ms.setParseAction(lambda s, l, tok: AngularDistance(tok))
+    ms = ms.set_parse_action(lambda s, l, tok: AngularDistance(tok))
 
     return ms
 

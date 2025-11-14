@@ -125,7 +125,7 @@ def define_shape_helper(shape_defs):
 def define_expr(regionShape, negate_func):
 
     minus = Literal("-").suppress()
-    regionExclude = (minus + regionShape).setParseAction(negate_func)
+    regionExclude = (minus + regionShape).set_parse_action(negate_func)
     regionExpr = (regionShape | regionExclude)
 
     return regionExpr
@@ -151,7 +151,7 @@ def comment_shell_like(comment_begin, parseAction=None):
 
     c = comment_begin + restOfLine
     if parseAction:
-        c = c.setParseAction(parseAction)
+        c = c.set_parse_action(parseAction)
 
     return c
 
@@ -161,7 +161,7 @@ def define_simple_literals(literal_list, parseAction=None):
     l = MatchFirst([CaselessKeyword(k) for k in literal_list])
 
     if parseAction:
-        l = l.setParseAction(parseAction)
+        l = l.set_parse_action(parseAction)
 
     return l
 
