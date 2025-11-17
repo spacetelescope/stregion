@@ -22,7 +22,6 @@ dependencies = [
 ]
 dynamic = ['version']
 
-
 [project.urls]
 'repository' = 'http://github.com/spacetelescope/stregion'
 'download' = 'http://github.com/spacetelescope/stregion/releases'
@@ -43,3 +42,5 @@ write_to = 'stregion/version.py'
 [tool.setuptools.packages.find]
 where = ['.']
 
+[tool.cibuildwheel]
+skip = ["cp*t-*"]
