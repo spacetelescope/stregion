@@ -22,6 +22,10 @@ dependencies = [
 ]
 dynamic = ['version']
 
+[project.optional-dependencies]
+test = [
+    "jwst[test]",
+]
 
 [project.urls]
 'repository' = 'http://github.com/spacetelescope/stregion'
