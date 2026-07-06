@@ -26,6 +26,9 @@ EXTRA_COMPILE_ARGS = [
     "-Wno-int-conversion",
     "-std=gnu99",
 ]
+MACROS = [
+    ("Py_LIMITED_API", 0x03090000),  # PY_VERSION_HEX for 3.9
+]
 
 if sys.platform.startswith("win"):
     EXTRA_COMPILE_ARGS = []
@@ -41,7 +44,8 @@ extensions = [
             numpy_include,
         ],
         extra_compile_args=EXTRA_COMPILE_ARGS,
+        define_macros=MACROS,
     ),
 ]
 
-setup(ext_modules=cythonize(extensions))
+setup(ext_modules=cythonize(extensions), options={'bdist_wheel': {'py_limited_api': 'cp39'}})
