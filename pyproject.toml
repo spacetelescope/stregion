@@ -43,4 +43,8 @@ write_to = 'stregion/version.py'
 where = ['.']
 
 [tool.cibuildwheel]
-skip = ["cp*t-*"]
+build = [
+    "cp39-*",  # build for CPython 3.9 Stable API
+    "cp3*t-*",  # build for free-threaded Python
+]
+test-command = "python -c 'from stregion import _region_filter'"

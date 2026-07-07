@@ -1,9 +1,12 @@
 import os
 import sys
+import sysconfig
 import warnings
 
-from setuptools import setup, Extension
 from Cython.Build import cythonize
+from setuptools import Extension, setup
+
+FREE_THREADED_PYTHON = sysconfig.get_config_var("Py_GIL_DISABLED") == 1
 
 
 try:
@@ -26,6 +29,9 @@ EXTRA_COMPILE_ARGS = [
     "-Wno-int-conversion",
     "-std=gnu99",
 ]
+MACROS = []
+if not FREE_THREADED_PYTHON:
+    MACROS.append(("Py_LIMITED_API", 0x03090000))  # PY_VERSION_HEX for 3.9
 
 if sys.platform.startswith("win"):
     EXTRA_COMPILE_ARGS = []
@@ -41,7 +47,13 @@ extensions = [
             numpy_include,
         ],
         extra_compile_args=EXTRA_COMPILE_ARGS,
+        define_macros=MACROS,
+        py_limited_api=not FREE_THREADED_PYTHON,
     ),
 ]
 
-setup(ext_modules=cythonize(extensions))
+SETUPTOOLS_OPTIONS = {}
+if not FREE_THREADED_PYTHON:
+    SETUPTOOLS_OPTIONS["bdist_wheel"] = {"py_limited_api": "cp39"}
+
+setup(ext_modules=cythonize(extensions), options=SETUPTOOLS_OPTIONS)
